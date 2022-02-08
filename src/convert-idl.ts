@@ -41,6 +41,7 @@ export function convertIDL(rootTypes: webidl2.IDLRootType[], options?: Options):
       case 'interface':
       case 'interface mixin':
       case 'dictionary':
+      case 'namespace':
         nodes.push(convertInterface(rootType, options))
         for (const attr of rootType.extAttrs) {
           if (attr.name === 'Exposed' && attr.rhs?.value === 'Window') {
@@ -164,7 +165,7 @@ function createIterableMethods(name: string, keyType: ts.TypeNode, valueType: ts
   ]
 }
 
-function convertInterface(idl: webidl2.InterfaceType | webidl2.DictionaryType | webidl2.InterfaceMixinType, options?: Options) {
+function convertInterface(idl: webidl2.InterfaceType | webidl2.DictionaryType | webidl2.InterfaceMixinType | webidl2.NamespaceType, options?: Options) {
   const members: ts.TypeElement[] = []
   const inheritance = []
   if ('inheritance' in idl && idl.inheritance) {

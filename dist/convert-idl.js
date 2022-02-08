@@ -42,6 +42,7 @@ function convertIDL(rootTypes, options) {
             case 'interface':
             case 'interface mixin':
             case 'dictionary':
+            case 'namespace':
                 nodes.push(convertInterface(rootType, options));
                 for (var _b = 0, _c = rootType.extAttrs; _b < _c.length; _b++) {
                     var attr = _c[_b];
