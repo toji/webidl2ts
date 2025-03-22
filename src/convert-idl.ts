@@ -286,12 +286,12 @@ function createAttributeSetter(value: webidl2.AttributeMemberType) {
 }
 
 function convertMemberOperation(idl: webidl2.OperationMemberType) {
-  const args = idl.arguments.map(convertArgument)
+  const args = convertArguments(idl.arguments)
   return ts.createMethodSignature([], args, convertType(idl.idlType), idl.name, undefined)
 }
 
 function convertMemberConstructor(idl: webidl2.ConstructorMemberType | webidl2.OperationMemberType, options?: Options) {
-  const args = idl.arguments.map(convertArgument)
+  const args = convertArguments(idl.arguments)
   if (options.emscripten) {
     return ts.createMethodSignature([], args, undefined, 'constructor', undefined)
   }
@@ -323,9 +323,27 @@ function convertMemberAttribute(idl: webidl2.AttributeMemberType) {
   )
 }
 
-function convertArgument(idl: webidl2.Argument) {
-  const optional = idl.optional ? ts.createToken(ts.SyntaxKind.QuestionToken) : undefined
-  return ts.createParameter([], [], undefined, idl.name, optional, convertType(idl.idlType))
+function convertArguments(argIDLs: webidl2.Argument[]) {
+  const ret = []
+  let seenRequiredArgument = false
+  // Iterate arguments in reverse order. All trailing optional arguments are converted as `T?`.
+  // Any non-trailing optional arguments (that come to the left of a required argument) are converted as `T | undefined`.
+  for (let i = argIDLs.length - 1; i >= 0; --i) {
+    const idl = argIDLs[i]
+    if (!idl.optional) seenRequiredArgument = true
+
+    let maybeQuestionToken = undefined
+    let type = convertType(idl.idlType)
+    if (idl.optional) {
+      if (!seenRequiredArgument) {
+        maybeQuestionToken = ts.createToken(ts.SyntaxKind.QuestionToken)
+      } else {
+        type = ts.factory.createUnionTypeNode([type, ts.factory.createTypeReferenceNode('undefined')])
+      }
+    }
+    ret.unshift(ts.createParameter([], [], undefined, idl.name, maybeQuestionToken, type))
+  }
+  return ret
 }
 function makeFinalType(type: ts.TypeNode, idl: webidl2.IDLTypeDescription): ts.TypeNode {
   if (idl.nullable) {
@@ -379,7 +397,7 @@ function convertCallback(idl: webidl2.CallbackType) {
     undefined,
     ts.createIdentifier(idl.name),
     undefined,
-    ts.createFunctionTypeNode(undefined, idl.arguments.map(convertArgument), convertType(idl.idlType)),
+    ts.createFunctionTypeNode(undefined, convertArguments(idl.arguments), convertType(idl.idlType)),
   )
 }
 

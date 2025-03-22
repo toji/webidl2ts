@@ -169,11 +169,11 @@ function createAttributeSetter(value) {
     return ts.createMethodSignature([], [parameter], ts.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword), 'set_' + value.name, undefined);
 }
 function convertMemberOperation(idl) {
-    var args = idl.arguments.map(convertArgument);
+    var args = convertArguments(idl.arguments);
     return ts.createMethodSignature([], args, convertType(idl.idlType), idl.name, undefined);
 }
 function convertMemberConstructor(idl, options) {
-    var args = idl.arguments.map(convertArgument);
+    var args = convertArguments(idl.arguments);
     if (options.emscripten) {
         return ts.createMethodSignature([], args, undefined, 'constructor', undefined);
     }
@@ -189,9 +189,28 @@ function convertMemberConst(idl) {
 function convertMemberAttribute(idl) {
     return ts.createPropertySignature([idl.readonly ? ts.createModifier(ts.SyntaxKind.ReadonlyKeyword) : null].filter(function (it) { return it != null; }), ts.createIdentifier(idl.name), undefined, convertType(idl.idlType), undefined);
 }
-function convertArgument(idl) {
-    var optional = idl.optional ? ts.createToken(ts.SyntaxKind.QuestionToken) : undefined;
-    return ts.createParameter([], [], undefined, idl.name, optional, convertType(idl.idlType));
+function convertArguments(argIDLs) {
+    var ret = [];
+    var seenRequiredArgument = false;
+    // Iterate arguments in reverse order. All trailing optional arguments are converted as `T?`.
+    // Any non-trailing optional arguments (that come to the left of a required argument) are converted as `T | undefined`.
+    for (var i = argIDLs.length - 1; i >= 0; --i) {
+        var idl = argIDLs[i];
+        if (!idl.optional)
+            seenRequiredArgument = true;
+        var maybeQuestionToken = undefined;
+        var type = convertType(idl.idlType);
+        if (idl.optional) {
+            if (!seenRequiredArgument) {
+                maybeQuestionToken = ts.createToken(ts.SyntaxKind.QuestionToken);
+            }
+            else {
+                type = ts.factory.createUnionTypeNode([type, ts.factory.createTypeReferenceNode('undefined')]);
+            }
+        }
+        ret.unshift(ts.createParameter([], [], undefined, idl.name, maybeQuestionToken, type));
+    }
+    return ret;
 }
 function makeFinalType(type, idl) {
     if (idl.nullable) {
@@ -231,7 +250,7 @@ function convertEnum(idl) {
     return ts.createTypeAliasDeclaration(undefined, undefined, ts.createIdentifier(idl.name), undefined, ts.createUnionTypeNode(idl.values.map(function (it) { return ts.createLiteralTypeNode(ts.createStringLiteral(it.value)); })));
 }
 function convertCallback(idl) {
-    return ts.createTypeAliasDeclaration(undefined, undefined, ts.createIdentifier(idl.name), undefined, ts.createFunctionTypeNode(undefined, idl.arguments.map(convertArgument), convertType(idl.idlType)));
+    return ts.createTypeAliasDeclaration(undefined, undefined, ts.createIdentifier(idl.name), undefined, ts.createFunctionTypeNode(undefined, convertArguments(idl.arguments), convertType(idl.idlType)));
 }
 function newUnsupportedError(message, idl) {
     return new Error("\n  " + message + "\n  " + JSON.stringify(idl, null, 2) + "\n\n  Please file an issue at https://github.com/giniedp/webidl2ts and provide the used idl file or example.\n");
