@@ -195,7 +195,11 @@ function convertArgument(idl) {
 }
 function makeFinalType(type, idl) {
     if (idl.nullable) {
-        return ts.factory.createUnionTypeNode([type, ts.factory.createNull()]);
+        var types = [type, ts.factory.createTypeReferenceNode('null')];
+        if (idl.type !== 'return-type') {
+            types.push(ts.factory.createTypeReferenceNode('undefined'));
+        }
+        return ts.factory.createUnionTypeNode(types);
     }
     return type;
 }

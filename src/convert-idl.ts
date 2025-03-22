@@ -165,7 +165,10 @@ function createIterableMethods(name: string, keyType: ts.TypeNode, valueType: ts
   ]
 }
 
-function convertInterface(idl: webidl2.InterfaceType | webidl2.DictionaryType | webidl2.InterfaceMixinType | webidl2.NamespaceType, options?: Options) {
+function convertInterface(
+  idl: webidl2.InterfaceType | webidl2.DictionaryType | webidl2.InterfaceMixinType | webidl2.NamespaceType,
+  options?: Options,
+) {
   const members: ts.TypeElement[] = []
   const inheritance = []
   if ('inheritance' in idl && idl.inheritance) {
@@ -326,7 +329,11 @@ function convertArgument(idl: webidl2.Argument) {
 }
 function makeFinalType(type: ts.TypeNode, idl: webidl2.IDLTypeDescription): ts.TypeNode {
   if (idl.nullable) {
-    return ts.factory.createUnionTypeNode([type, ts.factory.createNull() as unknown as ts.TypeNode])
+    const types = [type, ts.factory.createTypeReferenceNode('null')]
+    if (idl.type !== 'return-type') {
+      types.push(ts.factory.createTypeReferenceNode('undefined'))
+    }
+    return ts.factory.createUnionTypeNode(types)
   }
   return type
 }
