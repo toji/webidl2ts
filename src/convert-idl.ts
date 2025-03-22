@@ -27,7 +27,7 @@ const baseTypeConversionMap = new Map<string, string>([
   ...[...stringTypes].map((type) => [type, 'string'] as [string, string]),
   ...[...sameTypes].map((type) => [type, type] as [string, string]),
   ['object', 'any'],
-  ['sequence', 'Array'],
+  ['sequence', 'Iterable'],
   ['record', 'Record'],
   ['FrozenArray', 'ReadonlyArray'],
   ['EventHandler', 'EventHandler'],

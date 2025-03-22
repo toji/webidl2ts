@@ -27,7 +27,7 @@ var floatTypes = ['float', 'unrestricted float', 'double', 'unrestricted double'
 var sameTypes = ['any', 'boolean', 'Date', 'Function', 'Promise', 'void'];
 var baseTypeConversionMap = new Map(__spreadArray(__spreadArray(__spreadArray(__spreadArray(__spreadArray(__spreadArray([], __spreadArray([], bufferSourceTypes).map(function (type) { return [type, type]; })), __spreadArray([], integerTypes).map(function (type) { return [type, 'number']; })), __spreadArray([], floatTypes).map(function (type) { return [type, 'number']; })), __spreadArray([], stringTypes).map(function (type) { return [type, 'string']; })), __spreadArray([], sameTypes).map(function (type) { return [type, type]; })), [
     ['object', 'any'],
-    ['sequence', 'Array'],
+    ['sequence', 'Iterable'],
     ['record', 'Record'],
     ['FrozenArray', 'ReadonlyArray'],
     ['EventHandler', 'EventHandler'],
